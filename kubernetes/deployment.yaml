@@ -55,4 +55,4 @@ spec:
             - name: REDIS_PORT
               value: "6379"
             - name: ZK_CONNECTION_STRING
-              value: zookeeper:2181
+              value: zookeeper-headless:2181

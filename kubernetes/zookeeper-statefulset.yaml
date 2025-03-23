@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zookeeper
+spec:
+  serviceName: zookeeper-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      initContainers:
+        - name: init-myid
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              echo "Setting ZOO_MY_ID for this pod..."
+              ID=$(hostname | awk -F'-' '{print $NF}')
+              echo $((ID+1)) > /data/myid
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      containers:
+        - name: zookeeper
+          image: zookeeper:3.7
+          ports:
+            - containerPort: 2181  # Client connections
+            - containerPort: 2888  # Peer connections
+            - containerPort: 3888  # Leader election
+          env:
+            - name: ZOO_MY_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ZOO_SERVERS
+              value: >
+                server.1=zookeeper-0.zookeeper-headless.default.svc.cluster.local:2888:3888
+                server.2=zookeeper-1.zookeeper-headless.default.svc.cluster.local:2888:3888
+                server.3=zookeeper-2.zookeeper-headless.default.svc.cluster.local:2888:3888
+            - name: ZOO_4LW_COMMANDS_WHITELIST
+              value: "ruok,stat,mntr,conf,srvr"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: datalog
+              mountPath: /datalog
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+    - metadata:
+        name: datalog
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
