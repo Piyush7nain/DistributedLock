@@ -1,0 +1,67 @@
+# Section 1: Build and Deploy M1 (aarch64) Compatible Images
+
+# Start Minikube with ARM64 architecture
+minikube start --driver=docker --cpus=4 --memory=4g --container-runtime=docker
+
+# Set Docker environment to use Minikube's Docker daemon
+eval $(minikube docker-env)
+
+# Build the Docker image for ARM64
+docker build --platform linux/arm64 -t dist-lock-app:latest .
+
+# Verify the image is built for ARM64
+docker image inspect dist-lock-app:latest | grep Architecture
+
+# load image to minikube
+minikube image load distributed-system:latest
+
+# Deploy to Minikube
+kubectl apply -f leader-deployment.yaml
+kubectl apply -f follower-deployment.yaml
+kubectl apply -f leader-service.yaml
+kubectl apply -f follower-service.yaml
+
+# Check the status of pods and services
+kubectl get pods
+kubectl get services
+
+# Port forward leader service to access it locally
+kubectl port-forward svc/leader 8080:80
+
+# Access the leader API
+curl http://localhost:8080/data/health
+
+
+# Section 2: Build and Deploy Linux (x86_64) Compatible Images
+
+# Restart Minikube with x86_64 architecture
+minikube delete
+minikube start --driver=docker --cpus=4 --memory=4g --container-runtime=docker
+
+# Set Docker environment
+eval $(minikube docker-env)
+
+# Build the Docker image for x86_64
+docker buildx build --platform linux/amd64 -t distributed-system:latest .
+
+# Verify the image is built for x86_64
+docker image inspect distributed-system:latest | grep Architecture
+
+# Deploy to Minikube
+kubectl apply -f leader-deployment.yaml
+kubectl apply -f follower-deployment.yaml
+kubectl apply -f leader-service.yaml
+kubectl apply -f follower-service.yaml
+
+# Check the status of pods and services
+kubectl get pods
+kubectl get services
+
+# Port forward leader service to access it locally
+kubectl port-forward svc/leader 8080:80
+
+# Access the leader API
+curl http://localhost:8080/data/health
+
+# Test saving data
+curl -X POST http://localhost:8080/data -H "Content-Type: application/json" -d '{ "key1": "value1", "key2": "value2" }'

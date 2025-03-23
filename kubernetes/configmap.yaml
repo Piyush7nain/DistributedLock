@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dist-lock-app-config
+data:
+  LOCK_STRATEGY: "zookeeper"
+  REDIS_DATABASE: "0"
+  REDIS_TIMEOUT: "2000"
+  REDIS_LOCK_TTL: "30000"
+  REDIS_LOCK_RETRY_INTERVAL: "500"
+  REDIS_LOCK_RETRY_TIMES: "3"
+  ZK_SESSION_TIMEOUT: "60000"
+  ZK_CONNECTION_TIMEOUT: "15000"
+  ZK_RETRY_TIMES: "3"
+  ZK_RETRY_INTERVAL: "1000"
+  ZK_LOCK_BASE_PATH: "/locks"
+  ZK_LOCK_WAIT_TIME: "30000"
